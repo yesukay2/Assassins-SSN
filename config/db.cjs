@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
+const { MONGODB_URI } = require('./constants.cjs');
 
 async function connectDB() {
     try {
-        await mongoose.connect('mongodb+srv://yesukay2:BIsNbrpZa1QBEMO2@cluster0.umiky.mongodb.net/', {
+        await mongoose.connect(MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
