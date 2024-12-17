@@ -16,7 +16,13 @@ bot.start(async (ctx) => {
     }
 });
 
-bot.launch();
+bot.launch(
+    webhook({
+        domain: 'https://assassins-ssn.onrender.com',
+        path: '/webhook',
+        port: process.env.PORT
+    })
+);
 
 console.log('Bot is running...');
 
