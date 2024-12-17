@@ -1,0 +1,21 @@
+{
+  "name": "assassins-ssn",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node ssn.cjs && node webhook.cjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "coinbase-commerce-node": "^1.0.4",
+    "express": "^4.21.2",
+    "mongodb": "^6.12.0",
+    "mongoose": "^8.9.1",
+    "telegraf": "^4.16.3"
+  }
+}
