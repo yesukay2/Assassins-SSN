@@ -4,6 +4,9 @@ const connectDB = require('./config/db.cjs');
 const webhookRoutes = require('./routes/webhook.cjs');
 const bot = require('./bot/bot.cjs');
 const { registerWebhook } = require('./services/BlockchainService.cjs');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
