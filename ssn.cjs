@@ -9,7 +9,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const EXPRESS_PORT = process.env.EXPRESS_PORT;
 
 // Middleware
 app.use(bodyParser.json());
@@ -19,8 +19,8 @@ app.use('/webhook', webhookRoutes);
 
 // Connect to MongoDB and start server
 connectDB().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+    app.listen(EXPRESS_PORT, () => {
+        console.log(`Server running on port ${EXPRESS_PORT}`);
         registerWebhook(); // Register webhook with BlockCypher
     });
 });
