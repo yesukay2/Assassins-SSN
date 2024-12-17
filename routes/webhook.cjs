@@ -1,5 +1,5 @@
 const express = require('express');
-const { handleWebhook } = require('../services/BlockchainService');
+const { handleWebhook } = require('../services/BlockchainService.cjs');
 
 const router = express.Router();
 

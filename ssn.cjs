@@ -1,9 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const connectDB = require('./config/db');
-const webhookRoutes = require('./routes/webhook');
-const bot = require('./bot/bot');
-const { registerWebhook } = require('./services/BlockchainService');
+const connectDB = require('./config/db.cjs');
+const webhookRoutes = require('./routes/webhook.cjs');
+const bot = require('./bot/bot.cjs');
+const { registerWebhook } = require('./services/BlockchainService.cjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;

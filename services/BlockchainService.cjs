@@ -1,14 +1,14 @@
 const axios = require('axios');
-const Transaction = require('../models/Transaction');
-const User = require('../models/User');
-const { BLOCKCYPHER_API_URL, API_TOKEN, BTC_ADDRESS, REQUIRED_CONFIRMATIONS } = require('../config/constants');
+const Transaction = require('../models/Transaction.cjs');
+const User = require('../models/User.cjs');
+const { BLOCKCYPHER_API_URL, API_TOKEN, BTC_ADDRESS, REQUIRED_CONFIRMATIONS } = require('../config/constants.cjs');
 
 async function registerWebhook() {
     try {
         const webhookData = {
             event: 'confirmed-tx',
             address: BTC_ADDRESS,
-            url: 'https://yourserver.com/webhook', // Replace with webhook URL
+            url: 'https://assassins-ssn.onrender.com', // Replace with webhook URL
         };
 
         const response = await axios.post(

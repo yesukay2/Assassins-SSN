@@ -1,6 +1,6 @@
 const { Telegraf } = require('telegraf');
-const User = require('../models/User');
-const { BOT_TOKEN } = require('../config/constants');
+const User = require('../models/User.cjs');
+const { BOT_TOKEN } = require('../config/constants.cjs');
 
 const bot = new Telegraf(BOT_TOKEN);
 
