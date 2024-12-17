@@ -8,7 +8,7 @@ async function registerWebhook() {
         const webhookData = {
             event: 'confirmed-tx',
             address: BTC_ADDRESS,
-            url: 'https://yourserver.com/webhook', // Replace with your URL
+            url: 'https://yourserver.com/webhook', // Replace with webhook URL
         };
 
         const response = await axios.post(
