@@ -1,6 +1,5 @@
-config/constants.cjs
-
-
 *.log
 
 temp/
+
+.env
