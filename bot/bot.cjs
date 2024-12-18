@@ -44,7 +44,7 @@ bot.command('lookup', async (ctx) => {
     // Step 1: Ask for first name
     await ctx.reply('Please enter your first name.');
     bot.on('text', async (firstNameCtx) => {
-        if(firstNameCtx.message.text.length < 2 || /[^a-zA-Z]/.test(firstNameCtx.message.text)){
+        if(firstNameCtx.message.text.length < 2 || !(/[^a-zA-Z]/.test(firstNameCtx.message.text))){
             return firstNameCtx.reply('Please enter a valid first name.');
         }
         const firstName = firstNameCtx.message.text;
