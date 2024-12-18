@@ -145,6 +145,7 @@ bot.on('text', async (ctx) => {
     } else {
         ctx.reply(`You don't have an account yet. Please use /start to create one.`);
     }
+    ctx.reply(' Choose a command: /start, /balance, /deposit, /lookup');
 });
 
 // Launch the bot
