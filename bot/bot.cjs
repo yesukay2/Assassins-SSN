@@ -111,6 +111,7 @@ bot.command('deposit', async (ctx) => {
 
 // Bot start command: Check or create user and display wallet balance
 bot.start(async (ctx) => {
+    console.log('Bot started');
     const chatId = ctx.chat.id;
     const username = ctx.update.message.from.username; // Get Telegram username of the user
     let user = await User.findOne({ chatId });
