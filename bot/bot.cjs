@@ -4,7 +4,9 @@ const express = require('express');
 const crypto = require('crypto');
 const User = require('../models/User.cjs'); // User model
 const { BOT_TOKEN } = require('../config/constants.cjs'); // Bot token
+const dotenv = require('dotenv');
 
+dotenv.config();
 
 // Initialize the Telegram bot
 const bot = new Telegraf(BOT_TOKEN);
@@ -33,7 +35,7 @@ bot.command('lookup', async (ctx) => {
 
     // Ensure user has sufficient balance
     if (!user || user.walletBalance < 10) {
-        return ctx.reply('Your balance is insufficient for an SSN lookup. Please deposit at least $10 to proceed.');
+        return ctx.reply('Your balance is insufficient for an SSN lookup. Please deposit at least $20 to proceed.');
     }
 
     // Prompt for user details to generate SSN
@@ -95,6 +97,18 @@ bot.command('balance', async (ctx) => {
     }
 });
 
+bot.command('deposit', async (ctx) => {
+    const chatId = ctx.chat.id;
+    const user = await User.findOne({ chatId });
+
+    if (user) {
+        const btcAddress = user.btcAddress;
+        ctx.reply(`Deposit $20 or more Bitcoin to the address: ${btcAddress} and include a reference: ${user.memo} in the memo field.`);
+    } else {
+        ctx.reply(`You don't have an account yet. Please use /start to create one.`);
+    }
+    });
+
 // Bot start command: Check or create user and display wallet balance
 bot.start(async (ctx) => {
     const chatId = ctx.chat.id;
@@ -103,7 +117,8 @@ bot.start(async (ctx) => {
 
     // If user doesn't exist, create a new one with the Telegram username
     if (!user) {
-        const btcAddress = "bc1qsj55rn9wl8xghdaskcj8m8mrsjyax6h6w6c0xx"; // This is the single Bitcoin address for all deposits
+        // const btcAddress = "bc1qsj55rn9wl8xghdaskcj8m8mrsjyax6h6w6c0xx"; // This is the single Bitcoin address for all deposits
+        const btcAddress = process.env.BTC_ADDRESS;
         const memo = generateMemo(username); // Generate memo using the Telegram username for uniqueness
         user = await User.create({
             chatId,

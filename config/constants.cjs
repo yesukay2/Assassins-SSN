@@ -12,4 +12,5 @@ module.exports = {
     API_TOKEN: process.env.API_TOKEN,
     BOT_TOKEN: process.env.BOT_TOKEN,
     REQUIRED_CONFIRMATIONS: process.env.REQUIRED_CONFIRMATIONS,
+    MIN_DEPOSIT_AMOUNT: 20
 };
