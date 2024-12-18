@@ -11,6 +11,16 @@ dotenv.config();
 // Initialize the Telegram bot
 const bot = new Telegraf(BOT_TOKEN);
 
+
+// In-memory store for user states
+const userStates = {};
+
+// Function to validate text input
+function isValidText(input) {
+    const regex = /^[a-zA-Z\s]+$/; // Allow only letters and spaces
+    return regex.test(input) && input.length <= 50; // Limit to 50 characters
+}
+
 // Helper function to generate a unique ID for SSN lookup
 function generateSSN() {
     let id = Math.floor(10000000 + Math.random() * 90000000); // Generate an 8-digit ID
@@ -28,62 +38,32 @@ function generateMemo(username) {
     return memo;
 }
 
-// SSN lookup flow
-bot.command('lookup', async (ctx) => {
+bot.start(async (ctx) => {
+    console.log('Bot started');
+    userStates[ctx.chat.id] = { step: 0, data: {} };
     const chatId = ctx.chat.id;
-    const user = await User.findOne({ chatId });
+    const username = ctx.update.message.from.username; // Get Telegram username of the user
+    let user = await User.findOne({ chatId });
 
-    // Ensure user has sufficient balance
-    if (!user || user.walletBalance < 10) {
-        return ctx.reply('Your balance is insufficient for an SSN lookup. Please deposit at least $20 to proceed.');
-    }
-
-    // Prompt for user details to generate SSN
-    ctx.reply('To perform an SSN lookup, please provide the following information.');
-
-    // Step 1: Ask for first name
-    await ctx.reply('Please enter your first name.');
-    bot.on('text', async (firstNameCtx) => {
-        if(firstNameCtx.message.text.length < 2 || !(/[^a-zA-Z]/.test(firstNameCtx.message.text))){
-            return firstNameCtx.reply('Please enter a valid first name.');
-        }
-        const firstName = firstNameCtx.message.text;
-        
-        // Step 2: Ask for last name
-        await firstNameCtx.reply('Please enter your last name.');
-        bot.on('text', async (lastNameCtx) => {
-            const lastName = lastNameCtx.message.text;
-            
-            // Step 3: Ask for state
-            await lastNameCtx.reply('Please enter your state.');
-            bot.on('text', async (stateCtx) => {
-                const state = stateCtx.message.text;
-                
-                // Step 4: Ask for address
-                await stateCtx.reply('Please enter your address.');
-                bot.on('text', async (addressCtx) => {
-                    const address = addressCtx.message.text;
-
-                    // Generate 8-digit ID
-                    const ssnId = generateSSN();
-
-                    // Deduct $10 from user balance
-                    user.walletBalance -= 10;
-                    await user.save();
-
-                    // Send response to user
-                    await addressCtx.reply(`Your SSN lookup ID is: ${ssnId}`);
-                    await addressCtx.reply(`Your new wallet balance is: $${user.walletBalance.toFixed(2)}.`);
-                    
-                    // If balance is below $10 after lookup
-                    if (user.walletBalance < 10) {
-                        await addressCtx.reply('Your balance is now below $10. Please deposit more funds.');
-                    }
-                });
-            });
+    // If user doesn't exist, create a new one with the Telegram username
+    if (!user) {
+        // const btcAddress = "bc1qsj55rn9wl8xghdaskcj8m8mrsjyax6h6w6c0xx"; // This is the single Bitcoin address for all deposits
+        const btcAddress = process.env.BTC_ADDRESS;
+        const memo = generateMemo(username); // Generate memo using the Telegram username for uniqueness
+        user = await User.create({
+            chatId,
+            username : username,
+            walletBalance: 20,
+            btcAddress,
+            memo // Store the memo with the user
         });
-    });
+        ctx.reply(`Welcome! Your wallet balance is $0. Please deposit $20 or more to this Bitcoin address: ${btcAddress}. Use the reference: ${memo} for verification.`);
+    } else {
+        // If user exists, display their current wallet balance
+        ctx.reply(`Welcome back, ${user.username}! Your wallet balance is $${user.walletBalance.toFixed(2)}.`);
+    }
 });
+
 
 // Handle balance lookup by command
 bot.command('balance', async (ctx) => {
@@ -110,46 +90,96 @@ bot.command('deposit', async (ctx) => {
     } else {
         ctx.reply(`You don't have an account yet. Please use /start to create one.`);
     }
-    });
+});
 
-// Bot start command: Check or create user and display wallet balance
-bot.start(async (ctx) => {
-    console.log('Bot started');
+// SSN lookup flow
+// Command to start SSN lookup
+bot.command('lookup', async (ctx) => {
     const chatId = ctx.chat.id;
-    const username = ctx.update.message.from.username; // Get Telegram username of the user
-    let user = await User.findOne({ chatId });
+    const user = await User.findOne({ chatId });
 
-    // If user doesn't exist, create a new one with the Telegram username
-    if (!user) {
-        // const btcAddress = "bc1qsj55rn9wl8xghdaskcj8m8mrsjyax6h6w6c0xx"; // This is the single Bitcoin address for all deposits
-        const btcAddress = process.env.BTC_ADDRESS;
-        const memo = generateMemo(username); // Generate memo using the Telegram username for uniqueness
-        user = await User.create({
-            chatId,
-            username : username,
-            walletBalance: 0,
-            btcAddress,
-            memo // Store the memo with the user
-        });
-        ctx.reply(`Welcome! Your wallet balance is $0. Please deposit $20 or more to this Bitcoin address: ${btcAddress}. Use the reference: ${memo} for verification.`);
-    } else {
-        // If user exists, display their current wallet balance
-        ctx.reply(`Welcome back, ${user.username}! Your wallet balance is $${user.walletBalance.toFixed(2)}.`);
+    if(!user) {
+        return ctx.reply('You are not registered. Press /start to register.');
+    }
+    if (user.walletBalance < 10) {
+        return ctx.reply('Your balance is insufficient for an SSN lookup. Please deposit at least $20 to proceed.');
+    }
+
+    userStates[chatId] = { step: 1, data: {} };
+    ctx.reply('To perform an SSN lookup, please provide the following information.');
+    ctx.reply('Step 1: Please enter your first name.');
+});
+
+// Handle dynamic steps for lookup flow
+bot.on('text', async (ctx) => {
+    const chatId = ctx.chat.id;
+
+    if (!userStates[chatId]) return;
+
+    const currentState = userStates[chatId];
+    const input = ctx.message.text.trim();
+
+    switch (currentState.step) {
+        case 1:
+            if (!isValidText(input)) {
+                return ctx.reply('Invalid first name. Please enter only letters (max 50 characters).');
+            }
+            currentState.data.firstName = input;
+            currentState.step++;
+            return ctx.reply('Step 2: Please enter your last name.');
+        
+        case 2:
+            if (!isValidText(input)) {
+                return ctx.reply('Invalid last name. Please enter only letters (max 50 characters).');
+            }
+            currentState.data.lastName = input;
+            currentState.step++;
+            return ctx.reply('Step 3: Please enter your state.');
+
+        case 3:
+            if (!isValidText(input)) {
+                return ctx.reply('Invalid state. Please enter only letters (max 50 characters).');
+            }
+            currentState.data.state = input;
+            currentState.step++;
+            return ctx.reply('Step 4: Please enter your address.');
+
+        case 4:
+            if (!input || input.length > 100) {
+                return ctx.reply('Invalid address. Please ensure it is not empty and has a maximum of 100 characters.');
+            }
+            currentState.data.address = input;
+
+            // Process SSN and update balance
+            const user = await User.findOne({ chatId });
+            if (user.walletBalance < 10) {
+                delete userStates[chatId];
+                return ctx.reply('Your balance is insufficient for an SSN lookup. Please deposit more funds.');
+            }
+
+            const ssnId = generateSSN();
+            user.walletBalance -= 10;
+            await user.save();
+
+            await ctx.reply(`Your SSN lookup ID is: ${ssnId}`);
+            await ctx.reply(`Your new wallet balance is: $${user.walletBalance.toFixed(2)}.`);
+            if (user.walletBalance < 10) {
+                await ctx.reply('Your balance is now below $10. Please deposit more funds.');
+            }
+
+            delete userStates[chatId];
+            break;
+
+        default:
+            ctx.reply('An unexpected error occurred. Please try again.');
+            delete userStates[chatId];
+            break;
     }
 });
 
-// Middleware to handle balance checks when users send messages
-// bot.on('text', async (ctx) => {
-//     const chatId = ctx.chat.id;
-//     const user = await User.findOne({ chatId });
 
-//     if (user) {
-//         ctx.reply(`Your current wallet balance is $${user.walletBalance.toFixed(2)}.`);
-//     } else {
-//         ctx.reply(`You don't have an account yet. Please use /start to create one.`);
-//     }
-//     ctx.reply(' Choose a command: /start, /balance, /deposit, /lookup');
-// });
+
+
 
 // Launch the bot
 bot.launch();
