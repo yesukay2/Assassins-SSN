@@ -137,17 +137,17 @@ bot.start(async (ctx) => {
 });
 
 // Middleware to handle balance checks when users send messages
-bot.on('text', async (ctx) => {
-    const chatId = ctx.chat.id;
-    const user = await User.findOne({ chatId });
+// bot.on('text', async (ctx) => {
+//     const chatId = ctx.chat.id;
+//     const user = await User.findOne({ chatId });
 
-    if (user) {
-        ctx.reply(`Your current wallet balance is $${user.walletBalance.toFixed(2)}.`);
-    } else {
-        ctx.reply(`You don't have an account yet. Please use /start to create one.`);
-    }
-    ctx.reply(' Choose a command: /start, /balance, /deposit, /lookup');
-});
+//     if (user) {
+//         ctx.reply(`Your current wallet balance is $${user.walletBalance.toFixed(2)}.`);
+//     } else {
+//         ctx.reply(`You don't have an account yet. Please use /start to create one.`);
+//     }
+//     ctx.reply(' Choose a command: /start, /balance, /deposit, /lookup');
+// });
 
 // Launch the bot
 bot.launch();
