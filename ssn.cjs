@@ -24,3 +24,15 @@ connectDB().then(() => {
         registerWebhook(); // Register webhook with BlockCypher
     });
 });
+
+const pingInterval = 3 * 60 * 1000; // Every 3 minutes
+const serverURL = 'https://assassins-ssn.onrender.com';
+
+setInterval(async () => {
+  try {
+    await app.get(serverURL);
+    console.log('Server pinged to keep alive');
+  } catch (error) {
+    console.error('Ping failed:', error.message);
+  }
+}, pingInterval);
